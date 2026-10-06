@@ -1653,7 +1653,7 @@ function sbLogin(){
   if(!e||!p){$('sb-err').textContent='Informe e-mail e senha.';return}
   $('sb-err').textContent='';$('sb-go').disabled=true;
   sbAuth({email:e,password:p},'password').then(function(){
-    $('sb-pass').value='';sbGate();sbStart();
+    $('sb-pass').value='';sbStart();setTab('home');
   }).catch(function(err){
     $('sb-err').textContent=/invalid/i.test(err.message)?'E-mail ou senha incorretos.':'Não foi possível entrar: '+err.message;
   }).then(function(){$('sb-go').disabled=false});
