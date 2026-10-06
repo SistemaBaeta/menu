@@ -353,6 +353,20 @@ body.baeta:not(.mob) main.wrap{max-width:1560px}
 .mur-p{margin:0;font-size:13.5px;color:var(--ink);white-space:pre-line;overflow-wrap:anywhere}
 .mur-l{font-size:13px;font-weight:700;color:var(--brand)}
 .mur-m{margin-top:auto;font-size:11.5px;color:var(--muted);padding-top:4px}
+#mur-list.mur-list{grid-template-columns:1fr;gap:16px}
+.mur-card.mur-h{display:grid;grid-template-columns:230px minmax(0,1fr) 200px;gap:0 28px;align-items:stretch;padding:22px 26px;border-radius:18px}
+.mur-card.mur-h.new{box-shadow:inset 5px 0 0 var(--brand)}
+.mur-h .mur-side{display:flex;flex-direction:column;gap:12px;padding-right:28px;border-right:1px solid var(--line)}
+.mur-h .mur-tag{font-size:13px;padding:4px 12px}
+.mur-h .mur-ev{display:flex;flex-direction:column;gap:2px;font-size:15px}
+.mur-h .mur-ev span{font-size:13px;color:var(--muted)}
+.mur-h .mur-body{display:flex;flex-direction:column;gap:10px;min-width:0;justify-content:center}
+.mur-h .mur-t{font-size:22px;margin:0}
+.mur-h .mur-p{font-size:15.5px;line-height:1.55}
+.mur-h .mur-end{display:flex;flex-direction:column;align-items:flex-end;justify-content:space-between;gap:12px;text-align:right}
+.mur-h .mur-act{margin-left:0}
+.mur-h .mur-m{margin-top:0;padding-top:0}
+@media (max-width:1100px){.mur-card.mur-h{grid-template-columns:1fr;gap:12px;padding:16px}.mur-h .mur-side{padding-right:0;border-right:0;gap:8px}.mur-h .mur-ev{flex-direction:row;flex-wrap:wrap;gap:6px}.mur-h .mur-t{font-size:18px}.mur-h .mur-end{flex-direction:row-reverse;align-items:center;justify-content:space-between;text-align:left}}
 .bus-q{position:relative;margin-top:14px}
 .bus-q svg{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none}
 .bus-q input{padding-left:40px;min-height:46px}
@@ -1436,14 +1450,14 @@ function murRender(){
   $('mur-n').textContent=murData.length+(murData.length===1?' aviso':' avisos');
   $('mur-list').innerHTML=lst.length?lst.map(function(a){
     var ev=murEvt(a),nw=murNew[a.id],u=btUrl(a.link);
-    return '<article class="mur-card'+(a.fixo?' pin':'')+(nw?' new':'')+'"><div class="mur-top"><span class="mur-tag" data-t="'+esc(a.tipo)+'">'+esc(a.tipo)+'</span>'
+    return '<article class="mur-card mur-h'+(a.fixo?' pin':'')+(nw?' new':'')+'"><div class="mur-side"><div class="mur-top"><span class="mur-tag" data-t="'+esc(a.tipo)+'">'+esc(a.tipo)+'</span>'
       +(nw?'<span class="mur-new">Novo</span>':'')+(a.fixo?'<span class="mur-pin" title="Fixado no topo">'+IC_PIN+'</span>':'')
-      +'<span class="mur-act"><button class="btn sm ico" type="button" title="Editar" aria-label="Editar" data-mur-edit="'+esc(a.id)+'">'+IC_EDIT+'</button><button class="btn sm ico danger" type="button" title="Remover" aria-label="Remover" data-mur-del="'+esc(a.id)+'">'+IC_DEL+'</button></span></div>'
-      +'<h3 class="mur-t">'+esc(a.titulo)+'</h3>'
-      +(ev?'<div class="mur-ev'+(ev.past?' past':'')+'"><b>'+esc(ev.txt)+'</b> · '+ev.rel+'</div>':'')
+      +'</div>'+(ev?'<div class="mur-ev'+(ev.past?' past':'')+'"><b>'+esc(ev.txt)+'</b><span>'+ev.rel+'</span></div>':'')+'</div>'
+      +'<div class="mur-body"><h3 class="mur-t">'+esc(a.titulo)+'</h3>'
       +(a.texto?'<p class="mur-p">'+esc(a.texto)+'</p>':'')
-      +(u?'<a class="mur-l" href="'+esc(u)+'" target="_blank" rel="noopener noreferrer">Abrir link</a>':'')
-      +'<div class="mur-m">Publicado em '+murFmtTs(a.criado)+(a.atualizado?' · atualizado em '+murFmtTs(a.atualizado):'')+'</div></article>';
+      +(u?'<a class="mur-l" href="'+esc(u)+'" target="_blank" rel="noopener noreferrer">Abrir link</a>':'')+'</div>'
+      +'<div class="mur-end"><span class="mur-act"><button class="btn sm ico" type="button" title="Editar" aria-label="Editar" data-mur-edit="'+esc(a.id)+'">'+IC_EDIT+'</button><button class="btn sm ico danger" type="button" title="Remover" aria-label="Remover" data-mur-del="'+esc(a.id)+'">'+IC_DEL+'</button></span>'
+      +'<div class="mur-m">Publicado em '+murFmtTs(a.criado)+(a.atualizado?' · atualizado em '+murFmtTs(a.atualizado):'')+'</div></div></article>';
   }).join(''):'<div class="empty" style="grid-column:1/-1">Nenhum aviso publicado. Use + Novo aviso para publicar o primeiro.</div>';
 }
 function murForm(open,row){
