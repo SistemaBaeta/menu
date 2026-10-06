@@ -393,6 +393,19 @@ body.baeta:not(.mob) main.wrap{max-width:1560px}
 .bt-box{margin-top:18px}
 .bt-box[hidden]{display:none}
 .bt-count{font-size:12px;color:var(--muted);margin:0 0 10px}
+.bt-fbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 12px;position:relative}
+.bt-fbar .fl{font-size:12px;color:var(--muted);font-weight:700;letter-spacing:.05em;text-transform:uppercase}
+.fil{position:relative}
+.fbtn.on{background:var(--brand);border-color:var(--brand);color:var(--on-brand)}
+.fpop{position:absolute;z-index:8;top:calc(100% + 6px);left:0;min-width:240px;max-width:min(340px,90vw);max-height:320px;overflow:auto;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px;box-shadow:0 12px 30px rgba(0,0,0,.18);display:flex;flex-direction:column;gap:2px}
+.fpop .fopt{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:500;letter-spacing:0;text-transform:none;color:var(--ink);margin:0}
+.fpop .fopt:hover{background:var(--surface2)}
+.fpop .fopt input{width:auto;min-height:0;margin:0;flex:0 0 auto}
+.fpop .fopt span{flex:1;min-width:0;overflow-wrap:anywhere}
+.fpop .fopt em{font-style:normal;font-size:12px;color:var(--muted)}
+.fpop .fopt.z{opacity:.45}
+.fpop .fempty{padding:8px;color:var(--muted);font-size:13px}
+@media (max-width:640px){.fil{position:static}.fpop{left:0;right:0;max-width:none}}
 .bt-hact{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .eyebtn{display:inline-flex;align-items:center;gap:6px}
 .eyebtn svg{flex:0 0 auto}
@@ -1348,16 +1361,36 @@ function btBuild(k){
   var c=BT[k],box=$('bt-'+k);
   box.innerHTML='<div class="bt-head"><h2>'+c.titulo+'</h2><div class="bt-hact">'+(k==='emp'?'<button class="btn sm eyebtn" type="button" data-priv></button>':'')+'<button class="btn primary" type="button" data-bt-add="'+k+'" aria-expanded="false">+ Adicionar</button></div></div>'
    +'<p class="bt-count" id="bt-'+k+'-n"></p>'
+   +'<div class="bt-fbar" id="bt-'+k+'-fbar"></div>'
    +'<div class="tbl"><table><thead><tr>'+c.cols.map(function(x){return '<th'+(x[2]?' class="num"':'')+'>'+x[1]+'</th>'}).join('')+'<th></th></tr></thead><tbody id="bt-'+k+'-body"></tbody></table></div>'
    +'<form class="bt-form" id="bt-'+k+'-form" hidden novalidate><h3 id="bt-'+k+'-ft"></h3>'
    +c.fields.map(function(f){var id=c.pref+'-'+f[0],ty=f[2];if(ty==='select')return '<div><label for="'+id+'">'+f[1]+'</label><select id="'+id+'"><option value="">Selecione</option>'+f[5].map(function(o){return '<option>'+o+'</option>'}).join('')+'</select></div>';var attr=ty==='int'?' type="text" inputmode="numeric"':ty==='pct'?' type="text" inputmode="decimal"':ty==='money'?' data-money inputmode="numeric"':ty==='area'?' type="text" inputmode="decimal"':ty==='tel'?' type="text" inputmode="tel" autocomplete="off"':ty==='url'?' type="text" inputmode="url" autocapitalize="off"':' type="text"';
      return '<div><label for="'+id+'">'+f[1]+'</label><input id="'+id+'"'+attr+(f[4]?' required':'')+(f[3]?' placeholder="'+esc(f[3])+'"':'')+'></div>'}).join('')
    +'<div class="bt-fa"><button class="btn primary" type="button" data-bt-save="'+k+'" id="bt-'+k+'-save">Adicionar</button><button class="btn" type="button" data-bt-cancel="'+k+'">Cancelar</button></div></form>';
 }
+var BTF={emp:['const','end','ent','area'],usa:['bairro','tipo','quartos','status']};
+var btFil={emp:{},usa:{}},btFilOpen=null,btFilOpts={emp:{},usa:{}};
+function btFv(r,f){var v=r[f];if(v===undefined||v===null)return '';if(typeof v==='number')return v>0?String(v):'';return String(v).trim()}
+function btFRows(k,skip){return btData[k].filter(function(r){return BTF[k].every(function(f){if(f===skip)return true;var s=btFil[k][f];return !s||!s.length||s.indexOf(btFv(r,f))>-1})})}
+function btFBar(k){
+  var bar=$('bt-'+k+'-fbar');if(!bar)return;
+  var any=false;
+  bar.innerHTML='<span class="fl">Filtrar por</span>'+BTF[k].map(function(f){
+    var lb=BT[k].cols.filter(function(c){return c[0]===f})[0][1],sel=btFil[k][f]||[],cnt={};
+    btFRows(k,f).forEach(function(r){var v=btFv(r,f);cnt[v]=(cnt[v]||0)+1});
+    sel.forEach(function(v){if(!(v in cnt))cnt[v]=0});
+    var vals=Object.keys(cnt).sort(function(a,b){if(a===''||b==='')return a===''?1:-1;return f==='quartos'?a-b:a.localeCompare(b,'pt-BR',{numeric:true})});
+    btFilOpts[k][f]=vals;if(sel.length)any=true;
+    var op=btFilOpen===k+':'+f;
+    return '<div class="fil"><button class="btn sm fbtn'+(sel.length?' on':'')+'" type="button" data-fil="'+k+':'+f+'" aria-expanded="'+op+'">'+esc(lb)+(sel.length?' ('+sel.length+')':'')+' ▾</button>'
+     +(op?'<div class="fpop" role="group" aria-label="Filtrar por '+esc(lb)+'">'+(vals.length?vals.map(function(v,i){return '<label class="fopt'+(cnt[v]?'':' z')+'"><input type="checkbox" data-fil-cb="'+k+':'+f+':'+i+'"'+(sel.indexOf(v)>-1?' checked':'')+'><span>'+(v===''?'(vazio)':f==='quartos'?v+(v==='1'?' quarto':' quartos'):esc(v))+'</span><em>'+cnt[v]+'</em></label>'}).join(''):'<div class="fempty">Sem opções</div>')+(sel.length?'<button class="btn sm" type="button" data-fil-clr="'+k+':'+f+'">Limpar</button>':'')+'</div>':'')+'</div>';
+  }).join('')+(any?'<button class="btn sm" type="button" data-fil-clr="'+k+'">Limpar filtros</button>':'');
+}
 function btRender(k){
-  var c=BT[k],d=btData[k];
-  $('bt-'+k+'-n').textContent=d.length+' '+(d.length===1?c.um:c.un);
-  $('bt-'+k+'-body').innerHTML=d.length?d.map(function(r){return '<tr>'+c.cols.map(function(x){return btCell(x,r,k).replace('<td','<td data-l="'+esc(x[1])+'"')}).join('')+'<td class="bt-act"><button class="btn sm ico" type="button" title="Editar" aria-label="Editar" data-bt-edit="'+k+':'+esc(r.id)+'">'+IC_EDIT+'</button><button class="btn sm ico danger" type="button" title="Remover" aria-label="Remover" data-bt-del="'+k+':'+esc(r.id)+'">'+IC_DEL+'</button></td></tr>'}).join(''):'<tr><td colspan="'+(c.cols.length+1)+'" class="empty">Nenhum item. Use + Adicionar para cadastrar o primeiro.</td></tr>';
+  var c=BT[k],d=btData[k],rows=btFRows(k);
+  $('bt-'+k+'-n').textContent=(rows.length<d.length?rows.length+' de '+d.length:d.length)+' '+(d.length===1?c.um:c.un);
+  btFBar(k);
+  $('bt-'+k+'-body').innerHTML=rows.length?rows.map(function(r){return '<tr>'+c.cols.map(function(x){return btCell(x,r,k).replace('<td','<td data-l="'+esc(x[1])+'"')}).join('')+'<td class="bt-act"><button class="btn sm ico" type="button" title="Editar" aria-label="Editar" data-bt-edit="'+k+':'+esc(r.id)+'">'+IC_EDIT+'</button><button class="btn sm ico danger" type="button" title="Remover" aria-label="Remover" data-bt-del="'+k+':'+esc(r.id)+'">'+IC_DEL+'</button></td></tr>'}).join(''):'<tr><td colspan="'+(c.cols.length+1)+'" class="empty">'+(d.length?'Nenhum item com esses filtros.':'Nenhum item. Use + Adicionar para cadastrar o primeiro.')+'</td></tr>';
 }
 function btForm(k,open,row){
   var c=BT[k],f=$('bt-'+k+'-form'),btn=document.querySelector('[data-bt-add="'+k+'"]');
@@ -1408,9 +1441,20 @@ Object.keys(BT).forEach(function(k){
 });
 privApply();
 $('view-baeta').addEventListener('input',function(e){var el=e.target;if(el.id==='be-tel'||el.id==='bu-tel')maskPhone(el)});
+$('view-baeta').addEventListener('change',function(e){
+  var el=e.target;if(!el.dataset||el.dataset.filCb===undefined)return;
+  var p=el.dataset.filCb.split(':'),k=p[0],f=p[1],v=btFilOpts[k][f][+p[2]],s=btFil[k][f]||[];
+  s=el.checked?s.concat(v):s.filter(function(x){return x!==v});
+  if(s.length)btFil[k][f]=s;else delete btFil[k][f];
+  btRender(k);var n=document.querySelector('[data-fil-cb="'+el.dataset.filCb+'"]');if(n)n.focus();
+});
+document.addEventListener('click',function(e){if(btFilOpen&&!e.target.closest('.fil')){var k=btFilOpen.split(':')[0];btFilOpen=null;btFBar(k)}});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'&&btFilOpen){var k=btFilOpen.split(':')[0];btFilOpen=null;btFBar(k)}});
 $('view-baeta').addEventListener('click',function(e){
   var b=e.target.closest('button');if(!b)return;
   if(b.dataset.priv!==undefined){privOn=!privOn;privApply();return}
+  if(b.dataset.fil){btFilOpen=btFilOpen===b.dataset.fil?null:b.dataset.fil;btFBar(b.dataset.fil.split(':')[0]);return}
+  if(b.dataset.filClr!==undefined){var fq=b.dataset.filClr.split(':'),fk=fq[0];if(fq[1])delete btFil[fk][fq[1]];else btFil[fk]={};btRender(fk);return}
   if(b.dataset.bt){btToggle(b.dataset.bt);return}
   if(b.dataset.btAdd){var k=b.dataset.btAdd,aberto=!$('bt-'+k+'-form').hidden&&!btEdit[k];btForm(k,!aberto);return}
   if(b.dataset.btSave){btSave(b.dataset.btSave);return}
